@@ -25,7 +25,7 @@ SimRet <- function(data){
 }
 
 ## Load the Crude Oil Prices
-OilPrice <- read_csv("/Users/Desktop/PhD/R_studio/R-computing/Thesis/Macroeconomic_data/Crude-Oil-Price-USD-Nasdaq.csv")
+OilPrice <- read_csv("PATH-TO-FILE")
 OilPrice$newdate <- strptime(as.character(OilPrice$Date),"%m/%d/%Y")
 format(OilPrice$newdate, "%Y-%m-%d")
 
@@ -41,7 +41,7 @@ oilprice <- ts(quarter.r, start = c(2014,1), end = c(2019,4),frequency = 4)
 ts.plot(oilprice, gpars=list(xlab="Year", ylab="Quarterly Oil Price (USD)"))
 
 ## Load Gold Prices
-GoldPrice <- read_csv("/Users/Desktop/PhD/R_studio/R-computing/Thesis/Macroeconomic_data/Gold-price-USD-INVESTING.csv")
+GoldPrice <- read_csv("PATH-TO-FILE")
 GoldPrice$newdate <- strptime(as.character(GoldPrice$Date),"%b %d,%Y")
 format(GoldPrice$newdate, "%Y-%m-%d")
 GoldPrice$quarter <- floor_date(GoldPrice$newdate, "quarter")
@@ -56,7 +56,7 @@ goldprice <- ts(gold.r, start = c(2014,1), end = c(2019,4), frequency = 4)
 ts.plot(goldprice, gpars=list(xlab="Year", ylab="Quarterly Gold Price (USD)"))
 
 ## Load S&P 500 Index
-SP500 <- read_csv("/Users/Desktop/PhD/R_studio/R-computing/Thesis/Macroeconomic_data/Global_Index/美国标准普尔500指数历史数据 (1).csv")
+SP500 <- read_csv("PATH-TO-FILE")
 SP500$newdate <- strptime(as.character(SP500$日期),"%Y年%m月%d日")
 format(SP500$newdate, "%Y-%m-%d")
 SP500$quarter <- floor_date(SP500$newdate, "quarter")
@@ -71,7 +71,7 @@ sp500 <- ts(sp500.r, start = c(2014,1), end = c(2019,4), frequency = 4)
 ts.plot(sp500, gpars=list(xlab="Year", ylab="S&P 500 Index (USD)"))
 
 ## Load CPI Data
-CPI <- read_csv("/Users/Desktop/PhD/R_studio/R-computing/Thesis/CPI_MONTHLY.csv")
+CPI <- read_csv("PATH-TO-FILE")
 CPI$quarter <- floor_date(CPI$...1, "quarter")
 df <- CPI %>%
   group_by(quarter) %>%
@@ -82,14 +82,14 @@ cpi <- ts(CPI.r$price, start = c(2014,1), end = c(2019,4), frequency = 4)
 ts.plot(cpi, gpars=list(xlab="Year", ylab="Custormer Price Index (USD)"))
 
 ## Load GDP Data
-GDP <- read_csv("/Users/Desktop/PhD/R_studio/R-computing/Thesis/GDP_Q.csv")
+GDP <- read_csv("PATH-TO-FILE")
 GDP.r <- data.frame(date = as.Date(as.yearqtr(GDP$Date,format="%YQ%q")), price = GDP$US)
 gdp.r <- SimRet(GDP.r$price)
 gdp <- ts(gdp.r, start = c(2014,1), end = c(2019,4), frequency = 4)
 ts.plot(gdp, gpars=list(xlab="Year", ylab="Seasonally Adjusted GDP (USD)"))
 
 ## Load US Covid data
-USCovid <- read_csv("/Users/Desktop/PhD/R_studio/R-computing/Thesis/US_Covid19.csv")
+USCovid <- read_csv("PATH-TO-FILE")
 USCovid$month <- floor_date(USCovid$`# Date_reported`, "month")
 df <- USCovid %>%
   group_by(month) %>%
@@ -138,7 +138,7 @@ summary(ModelSP500)
 # Diagnosing the VAR
 
 # Serial Correlation
-Serial1 <- serial.test(ModelSP500, lags.pt = 12, type = "PT.asymptotic")
+Serial1 <- serial.test(ModelSP500, lags.pt = 15, type = "PT.asymptotic")
 Serial1
 
 # Heteroscedasticity
@@ -146,8 +146,29 @@ Serial1
 Arch1 <- arch.test(ModelSP500, lags.multi = 3, multivariate.only = TRUE)
 Arch1
 
+# Normal Distribution of the Residuals
+
+Norm1 <- normality.test(ModelSP500, multivariate.only = TRUE)
+Norm1
+
+# Testing for Structural Breaks in the Residuals
+Stability1 <- stability(ModelSP500, type="OLS-CUSUM")
+plot(Stability1)
+
 # Granger Causality
 GrangerSP500 <- causality(ModelSP500, cause = "SP500")
+GrangerSP500
+
+GrangerSP500 <- causality(ModelSP500, cause = "CPI")
+GrangerSP500
+
+GrangerSP500 <- causality(ModelSP500, cause = "GDP")
+GrangerSP500
+
+GrangerSP500 <- causality(ModelSP500, cause = "Oil.Price")
+GrangerSP500
+
+GrangerSP500 <- causality(ModelSP500, cause = "Gold.Price")
 GrangerSP500
 
 # Impulse Response Functions
@@ -155,11 +176,22 @@ GrangerSP500
 SP500irf <- irf(ModelSP500, impulse = "GDP", response = "SP500", n.ahead = 20, boot =TRUE)
 plot(SP500irf, ylab ="SP500 Index", main="Shock from GDP")
 
+SP500irf <- irf(ModelSP500, impulse = "CPI", response = "SP500", n.ahead = 20, boot =TRUE)
+plot(SP500irf, ylab ="SP500 Index", main="Shock from CPI")
+
+SP500irf <- irf(ModelSP500, impulse = "Gold.Price", response = "SP500", n.ahead = 20, boot =TRUE)
+plot(SP500irf, ylab ="SP500 Index", main="Shock from Gold.Price")
+
+SP500irf <- irf(ModelSP500, impulse = "Oil.Price", response = "SP500", n.ahead = 20, boot =TRUE)
+plot(SP500irf, ylab ="SP500 Index", main="Shock from Gold.Price")
+
 # Variance Decomposition
 FEVD <- fevd(ModelSP500, n.ahead = 10)
+FEVD
 plot(FEVD)
 
 # VAR Forecasting
 
 forecast <- predict(ModelSP500, n.ahead = 4, ci = 0.95)
 fanchart(forecast, names ="SP500")
+
