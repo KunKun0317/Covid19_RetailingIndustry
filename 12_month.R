@@ -13,7 +13,7 @@ SimRet <- function(data){
 }
 
 ## Load S&P 500 Index
-MI <- read_csv("/Users/libingxin/Desktop/test/input/exchange/XXX.csv")
+MI <- read_csv("/Users/anan/Desktop/test/input/exchange/XXX.csv")
 MI$newdate <- strptime(as.character(MI$Date),"%Y-%m-%d")
 format(MI$newdate, "%Y-%m-%d")
 
